@@ -16,16 +16,16 @@ const PoolRow = ({ pair, tokenBAddress, apr, fee, logoB }: any) => {
 
   useEffect(() => { setIsClient(true); }, []);
 
-  // 1. CARI ALAMAT PAIR DULU (Biar gak 0x000 lagi)
+  // 1. CARI ALAMAT PAIR DULU
   const { data: realPairAddress } = useReadContract({
     address: FACTORY_ADDRESS as `0x${string}`,
     abi: FACTORY_ABI,
     functionName: 'getPair',
-    args: [WHT_ADDRESS as `0x${string}`, tokenBAddress as `0x${string}`],
+    args: [WHT_ADDRESS as `0x${string}`, (tokenBAddress || '0x0000000000000000000000000000000000000000') as `0x${string}`],
     query: { enabled: isClient }
   });
 
-  // 2. CEK SALDO LP DI ALAMAT YANG DIDAPET
+  // 2. CEK SALDO LP
   const { data: lpBalance } = useReadContract({
     address: realPairAddress as `0x${string}`,
     abi: PAIR_ABI,
@@ -58,7 +58,7 @@ const PoolRow = ({ pair, tokenBAddress, apr, fee, logoB }: any) => {
           {formattedLP} <span className="text-pink-500 text-[10px]">LP</span>
         </p>
       </div>
-      <a href={`https://explorer.haven.com/address/${realPairAddress}`} target="_blank" rel="noopener noreferrer" className={`p-3 bg-gray-800/30 rounded-xl transition-all border border-white/5 ${!realPairAddress || realPairAddress === '0x000...' ? 'opacity-20 pointer-events-none' : 'hover:bg-pink-500/20 hover:text-pink-500'}`}>
+      <a href={`https://explorer.haven.com/address/${realPairAddress}`} target="_blank" rel="noopener noreferrer" className={`p-3 bg-gray-800/30 rounded-xl transition-all border border-white/5 ${!realPairAddress || realPairAddress === '0x0000000000000000000000000000000000000000' ? 'opacity-20 pointer-events-none' : 'hover:bg-pink-500/20 hover:text-pink-500'}`}>
         <ExternalLink className="w-4 h-4 text-white" />
       </a>
     </div>
@@ -78,7 +78,6 @@ const Pools = () => {
   const { writeContract, data: hash } = useWriteContract();
   const { isLoading: isCreating, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // LIST POOL (Sekarang gak usah input pairAddress, cukup Token B nya aja)
   const pools = [
     { pair: 'HAV/USDC', tokenBAddress: TOKEN_LIST.find(t => t.symbol === 'USDC')?.address, apr: '45.2%', fee: '0.3%', logoB: 'U' },
     { pair: 'HAV/DATA', tokenBAddress: TOKEN_LIST.find(t => t.symbol === 'DATA')?.address, apr: '124.5%', fee: '0.3%', logoB: 'D' },
@@ -91,7 +90,7 @@ const Pools = () => {
   const handleCreate = () => {
     if (!isConnected) return alert("Konek wallet dulu jirr!");
     writeContract({
-      address: FACTORY_ADDRESS,
+      address: FACTORY_ADDRESS as `0x${string}`,
       abi: [{ "inputs": [{"name": "tokenA", "type": "address"},{"name": "tokenB", "type": "address"}], "name": "createPair", "outputs": [{"name": "pair", "type": "address"}], "stateMutability": "nonpayable", "type": "function" }] as const,
       functionName: 'createPair',
       args: [tokenA as `0x${string}`, tokenB as `0x${string}`],
@@ -118,7 +117,6 @@ const Pools = () => {
         ))}
       </div>
 
-      {/* MODAL TETEP SAMA */}
       {showModal && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-50 flex items-center justify-center p-4 text-white">
           <div className="bg-[#0d0d0d] border border-white/10 p-8 rounded-[40px] w-full max-w-md relative">
@@ -135,9 +133,17 @@ const Pools = () => {
                 <label className="text-[10px] text-pink-500 font-black uppercase ml-2 italic">Token B Address</label>
                 <div className="relative">
                   <input value={tokenB} onChange={(e) => setTokenB(e.target.value)} placeholder="0x..." className="w-full bg-[#131313] border border-white/5 p-4 rounded-2xl text-[10px] font-mono outline-none pr-24" />
-                  <select onChange={(e) => setTokenB(e.target.value)} className="absolute right-2 top-2 bottom-2 bg-[#1a1a1a] text-[10px] font-black px-2 rounded-xl">
+                  <select 
+                    onChange={(e) => setTokenB(e.target.value)} 
+                    value={tokenB}
+                    className="absolute right-2 top-2 bottom-2 bg-[#1a1a1a] text-[10px] font-black px-2 rounded-xl"
+                  >
                     <option value="">Select</option>
-                    {TOKEN_LIST.map(t => <option key={t.symbol} value={t.address}>{t.symbol}</option>)}
+                    {TOKEN_LIST.map(t => (
+                      <option key={t.symbol} value={t.address ?? ""}>
+                        {t.symbol}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

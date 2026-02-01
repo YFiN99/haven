@@ -1,17 +1,25 @@
 import './globals.css';
 import { Providers } from './providers';
+import Navbar from './components/Navbar';
 
 export const metadata = {
-  title: 'Haven Exchange | DeFi on DataHaven',
-  description: 'The premier decentralized exchange on DataHaven Testnet',
+  title: 'Haven Exchange',
+  description: 'Datahaven Dex',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body className="bg-black text-white antialiased">
+      <body className="bg-black">
         <Providers>
-          {children}
+          <Navbar />
+          <main className="pt-24">
+            {children}
+          </main>
         </Providers>
       </body>
     </html>

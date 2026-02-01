@@ -26,7 +26,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   const config = getDefaultConfig({
     appName: 'HAVEN EXCHANGE',
-    projectId: '93a6b83f06059d4359483c613098394e', // Hardcode biar build aman
+    projectId: '93a6b83f06059d4359483c613098394e', // Pakai ID ini biar build aman
     chains: [datahaven],
     ssr: true, 
   });
@@ -36,7 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={darkTheme()}>
+        <RainbowKitProvider theme={darkTheme()} modalSize="compact">
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

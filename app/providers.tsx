@@ -5,13 +5,12 @@ import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
 
-// 1. DEFINISIKAN CHAIN DATAHAVEN (Ini kuncinya!)
+// 1. DEFINISIKAN CHAIN DATAHAVEN
 const datahaven = defineChain({
   id: 55931,
   name: 'Datahaven Testnet',
   nativeCurrency: { name: 'HAV', symbol: 'HAV', decimals: 18 },
   rpcUrls: {
-    // Tanda kutip di akhir "testnet" tadi yang bikin error saldo 0
     default: { http: ['https://services.datahaven-testnet.network/testnet'] }, 
   },
   blockExplorers: {
@@ -19,10 +18,13 @@ const datahaven = defineChain({
   },
 });
 
+// 2. AMBIL PROJECT ID DARI ENV (Dashboard Vercel)
+const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || '';
+
 const config = getDefaultConfig({
-  appName: 'HAVEN EXGANGE',
-  projectId: '93a6...isi_project_id_lo', // Ambil dari walletconnect cloud
-  chains: [datahaven], // PAKAI DATAHAVEN, JANGAN MAINNET!
+  appName: 'HAVEN EXCHANGE',
+  projectId: projectId, 
+  chains: [datahaven],
   ssr: true, 
 });
 

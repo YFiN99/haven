@@ -41,7 +41,7 @@ export default function Farm() {
   const { data: pendingReward, refetch: refetchPending } = useReadContract({
     address: REVENUE_SHARE_ADDR, 
     abi: FARM_ABI, 
-    functionName: 'earned', // Di kontrak baru namanya 'earned'
+    functionName: 'earned', 
     args: [address!], 
     query: { enabled: !!address, refetchInterval: 3000 }
   });
@@ -49,7 +49,7 @@ export default function Farm() {
   const { data: stakedAmount, refetch: refetchStaked } = useReadContract({
     address: REVENUE_SHARE_ADDR, 
     abi: FARM_ABI, 
-    functionName: 'balanceOf', // Di kontrak baru namanya 'balanceOf'
+    functionName: 'balanceOf', 
     args: [address!], 
     query: { enabled: !!address }
   });
@@ -83,7 +83,8 @@ export default function Farm() {
     const parsedAmount = parseUnits(amount, 18);
 
     if (activeTab === 'stake') {
-      if ((allowance || 0n) < parsedAmount) {
+      // PERBAIKAN: Pakai BigInt(0) bukan 0n
+      if ((allowance || BigInt(0)) < parsedAmount) {
         writeContract({ address: LP_TOKEN_ADDR, abi: ERC20_ABI, functionName: 'approve', args: [REVENUE_SHARE_ADDR, parseUnits('999999999', 18)] });
       } else {
         writeContract({ address: REVENUE_SHARE_ADDR, abi: FARM_ABI, functionName: 'stake', args: [parsedAmount] });
@@ -116,7 +117,8 @@ export default function Farm() {
               <h3 className="text-4xl font-black tabular-nums">{displayReward}</h3>
               <button 
                 onClick={() => writeContract({ address: REVENUE_SHARE_ADDR, abi: FARM_ABI, functionName: 'claim' })}
-                disabled={!pendingReward || pendingReward === 0n || isConfirming}
+                // PERBAIKAN: Pakai BigInt(0)
+                disabled={!pendingReward || pendingReward === BigInt(0) || isConfirming}
                 className="bg-green-600 hover:bg-green-500 disabled:opacity-20 px-4 py-2 rounded-xl text-[10px] font-black shadow-lg shadow-green-900/20"
               >
                 HARVEST
@@ -135,8 +137,9 @@ export default function Farm() {
           <div className="bg-white/5 p-6 rounded-[30px] border border-white/5">
             <div className="flex justify-between text-[9px] text-gray-500 mb-4">
               <span>{activeTab === 'stake' ? 'WALLET' : 'STAKED'}</span>
-              <span className="text-white cursor-pointer hover:text-green-500" onClick={() => setAmount(activeTab === 'stake' ? (lpBalance?.formatted || '0') : formatUnits(stakedAmount || 0n, 18))}>
-                {activeTab === 'stake' ? Number(lpBalance?.formatted || 0).toFixed(6) : Number(formatUnits(stakedAmount || 0n, 18)).toFixed(6)} LP
+              {/* PERBAIKAN: Pakai BigInt(0) */}
+              <span className="text-white cursor-pointer hover:text-green-500" onClick={() => setAmount(activeTab === 'stake' ? (lpBalance?.formatted || '0') : formatUnits(stakedAmount || BigInt(0), 18))}>
+                {activeTab === 'stake' ? Number(lpBalance?.formatted || 0).toFixed(6) : Number(formatUnits(stakedAmount || BigInt(0), 18)).toFixed(6)} LP
               </span>
             </div>
             <input 
@@ -152,8 +155,9 @@ export default function Farm() {
             className="w-full bg-white text-black font-black py-5 rounded-[24px] text-xs hover:bg-green-500 hover:text-white transition-all disabled:opacity-10 shadow-xl flex justify-center items-center gap-3"
           >
             {(isConfirming || isBroadcasting) && <Loader2 className="w-4 h-4 animate-spin" />}
+            {/* PERBAIKAN: Pakai BigInt(0) */}
             {!isConnected ? 'CONNECT' : 
-             (activeTab === 'stake' && (allowance || 0n) < parseUnits(amount || '0', 18)) ? 'APPROVE LP' : 
+             (activeTab === 'stake' && (allowance || BigInt(0)) < parseUnits(amount || '0', 18)) ? 'APPROVE LP' : 
              activeTab === 'stake' ? 'STAKE LP' : 'UNSTAKE LP'}
           </button>
 

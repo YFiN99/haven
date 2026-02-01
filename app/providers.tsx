@@ -1,9 +1,10 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
-import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider, getDefaultConfig, darkTheme } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
+import '@rainbow-me/rainbowkit/styles.css';
 
 // 1. DEFINISIKAN CHAIN DATAHAVEN
 const datahaven = defineChain({
@@ -18,23 +19,29 @@ const datahaven = defineChain({
   },
 });
 
-// 2. AMBIL PROJECT ID DARI ENV (Dashboard Vercel)
-const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || '';
-
-const config = getDefaultConfig({
-  appName: 'HAVEN EXCHANGE',
-  projectId: projectId, 
-  chains: [datahaven],
-  ssr: true, 
-});
-
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  // Mastiin udah di browser (Client Side)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const config = getDefaultConfig({
+    appName: 'HAVEN EXCHANGE',
+    projectId: process.env.NEXT_PUBLIC_PROJECT_ID || '', 
+    chains: [datahaven],
+    ssr: true, 
+  });
+
+  if (!mounted) return null;
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>
+        <RainbowKitProvider theme={darkTheme()}>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

@@ -5,49 +5,27 @@ import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 const Navbar = () => {
   return (
-    <nav className="flex items-center justify-between px-8 py-4 bg-black border-b border-gray-800 fixed top-0 w-full z-50">
-      {/* LOGO: HAVEN EXCHANGE */}
-      <div className="flex items-center gap-3 group cursor-pointer">
-        {/* Icon Box */}
-        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(255,255,255,0.2)] group-hover:rotate-6 transition-transform">
-          <Shield className="text-black w-6 h-6" fill="black" />
+    <nav className="flex items-center justify-between px-6 py-4 bg-black/80 backdrop-blur-md border-b border-gray-800 fixed top-0 w-full z-50">
+      <div className="flex items-center gap-2">
+        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
+          <Shield className="text-black w-5 h-5" fill="black" />
         </div>
-        
-        {/* Text Brand */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-white font-black text-2xl tracking-tighter uppercase italic">
-            Haven
-          </span>
-          <span className="text-pink-500 font-black text-2xl tracking-tighter uppercase italic">
-            Exchange
-          </span>
+        <div className="hidden sm:block">
+          <span className="text-white font-black text-xl tracking-tighter uppercase italic">HAVEN </span>
+          <span className="text-pink-500 font-black text-xl tracking-tighter uppercase italic">EXCHANGE</span>
         </div>
       </div>
 
-      {/* Nav Menu */}
-      <div className="hidden md:flex items-center bg-[#131313] border border-gray-800 rounded-full px-2 py-1">
-        {['Swap', 'Liquidity', 'Pools', 'Farm'].map((item) => (
-          <button
-            key={item}
-            className={`px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${
-              item === 'Swap' ? 'bg-gray-800 text-white' : 'text-gray-500 hover:text-white'
-            }`}
-          >
+      <div className="flex items-center bg-[#131313] border border-gray-800 rounded-full p-1">
+        {['Swap', 'Liquidity'].map((item) => (
+          <button key={item} className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-all">
             {item}
           </button>
         ))}
       </div>
 
-      {/* WALLET: KOMPONEN ASLI RAINBOWKIT (SUDAH TERMASUK LOGIC & DESIGN) */}
-      <div className="flex items-center">
-        <ConnectButton 
-          accountStatus="address"
-          chainStatus="icon"
-          showBalance={false}
-        />
-      </div>
+      <ConnectButton accountStatus="avatar" chainStatus="icon" showBalance={true} />
     </nav>
   );
 };
-
 export default Navbar;

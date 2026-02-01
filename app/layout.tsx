@@ -1,21 +1,16 @@
 import './globals.css';
 import { Providers } from './providers';
-import Navbar from './components/Navbar';
-
-export const metadata = {
-  title: 'Haven Exchange',
-  description: 'DEX on Datahaven Network',
-};
+import Navbar from './components/Navbar'; // Pastiin impor cuma sekali
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-black antialiased overflow-x-hidden">
+      <body className="bg-black text-white antialiased">
         <Providers>
-          <Navbar />
-          <div className="pt-24 flex flex-col items-center">
+          <Navbar /> 
+          <main className="min-h-screen pt-20">
             {children}
-          </div>
+          </main>
         </Providers>
       </body>
     </html>

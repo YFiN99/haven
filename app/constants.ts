@@ -4,7 +4,7 @@ export const DATAHAVEN_CONFIG = {
   ROUTER: "0x34882E4B2E92b87A78bf9A46Ea345bA5B7613ab2",
   USDC: "0xBaFA49876219FD3b5BFb361FD7Ee3044Fbc576Ac",
   INIT_CODE_HASH: "0x494fbc9e5b1973dd14b0dbd9996ce35a7005d39519137220de8dd017d4e5cbcd",
-  FEE_SETTER: "0xE4CE700d2a32D635ba490384FA788554f8aCD81f"
+  FEE_SETTER: "0xE4CE700d2a32D635ba490384FA788554f8aCD81f" //
 };
 
 export const ROUTER_ADDRESS = DATAHAVEN_CONFIG.ROUTER as `0x${string}`;
@@ -14,13 +14,13 @@ export const TOKEN_ADDRESS = DATAHAVEN_CONFIG.USDC as `0x${string}`;
 export const ROUTER_ABI = [
   {
     "inputs": [
-      {"internalType": "uint256", "name": "amountOutMin", "type": "uint256"},
-      {"internalType": "address[]", "name": "path", "type": "address[]"},
-      {"internalType": "address", "name": "to", "type": "address"},
-      {"internalType": "uint256", "name": "deadline", "type": "uint256"}
+      {"name": "amountOutMin", "type": "uint256"},
+      {"name": "path", "type": "address[]"},
+      {"name": "to", "type": "address"},
+      {"name": "deadline", "type": "uint256"}
     ],
     "name": "swapExactETHForTokens",
-    "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
+    "outputs": [{"name": "amounts", "type": "uint256[]"}],
     "stateMutability": "payable",
     "type": "function"
   }

@@ -1,11 +1,17 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-background: #000;
+  --color-foreground: #fff;
+}
+
+:root {
+  color-scheme: dark;
+}
 
 body {
-  background-color: #000;
+  background-color: black;
   color: white;
   margin: 0;
-  padding: 0;
-  overflow-x: hidden;
+  font-family: ui-sans-serif, system-ui, sans-serif;
 }

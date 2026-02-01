@@ -7,13 +7,21 @@ export const DATAHAVEN_CONFIG = {
   FEE_SETTER: "0xE4CE700d2a32D635ba490384FA788554f8aCD81f"
 };
 
-// Tambahin ini biar SwapBox bisa import langsung jirr!
-export const ROUTER_ADDRESS = DATAHAVEN_CONFIG.ROUTER;
-export const WETH_ADDRESS = DATAHAVEN_CONFIG.WETH;
-export const TOKEN_ADDRESS = DATAHAVEN_CONFIG.USDC;
+export const ROUTER_ADDRESS = DATAHAVEN_CONFIG.ROUTER as `0x${string}`;
+export const WETH_ADDRESS = DATAHAVEN_CONFIG.WETH as `0x${string}`;
+export const TOKEN_ADDRESS = DATAHAVEN_CONFIG.USDC as `0x${string}`;
 
-// WAJIB: Tambahin ABI-nya di sini karena Vercel tadi komplain ROUTER_ABI missing!
 export const ROUTER_ABI = [
-  "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)",
-  "function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)"
+  {
+    "inputs": [
+      {"internalType": "uint256", "name": "amountOutMin", "type": "uint256"},
+      {"internalType": "address[]", "name": "path", "type": "address[]"},
+      {"internalType": "address", "name": "to", "type": "address"},
+      {"internalType": "uint256", "name": "deadline", "type": "uint256"}
+    ],
+    "name": "swapExactETHForTokens",
+    "outputs": [{"internalType": "uint256[]", "name": "amounts", "type": "uint256[]"}],
+    "stateMutability": "payable",
+    "type": "function"
+  }
 ] as const;

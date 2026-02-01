@@ -4,8 +4,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider, getDefaultConfig, darkTheme } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
-
-// CSS INI HARUS ADA, KALAU GAK MODALNYA GAK KELIHATAN (TRANSPARAN)
 import '@rainbow-me/rainbowkit/styles.css';
 
 const datahaven = defineChain({
@@ -20,29 +18,25 @@ const datahaven = defineChain({
   },
 });
 
-const config = getDefaultConfig({
-  appName: 'HAVEN EXCHANGE',
-  projectId: '93a6b83f06059d4359483c613098394e', // GUE HARDCODE ID LO BIAR PASTI JALAN
-  chains: [datahaven],
-  ssr: true, 
-});
-
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const config = getDefaultConfig({
+    appName: 'HAVEN EXCHANGE',
+    projectId: '93a6b83f06059d4359483c613098394e', // Hardcode biar build aman
+    chains: [datahaven],
+    ssr: true, 
+  });
 
-  // JANGAN RENDER APAPUN SAMPAI MOUNTED (BIAR GAK BENTROK SAMA SERVER)
-  if (!mounted) return <div style={{ visibility: 'hidden' }}>{children}</div>;
+  if (!mounted) return null;
 
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={darkTheme()} modalSize="compact">
+        <RainbowKitProvider theme={darkTheme()}>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

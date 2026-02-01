@@ -1,59 +1,42 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { WagmiProvider } from 'wagmi';
-import { RainbowKitProvider, getDefaultConfig, darkTheme } from '@rainbow-me/rainbowkit';
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { mainnet } from 'wagmi/chains';
+import { RainbowKitProvider, getDefaultConfig, connectorsForWallets } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
 import '@rainbow-me/rainbowkit/styles.css';
 
-<<<<<<< HEAD
-=======
 // 1. DEFINISIKAN CHAIN DATAHAVEN
->>>>>>> d2b95ba (fix: use env variable for project id and fix typo)
 const datahaven = defineChain({
   id: 55931,
   name: 'Datahaven Testnet',
   nativeCurrency: { name: 'HAV', symbol: 'HAV', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://services.datahaven-testnet.network/testnet'] }, 
+    default: { http: ['https://rpc.datahaven.tech'] },
   },
   blockExplorers: {
-    default: { name: 'Blockscout', url: 'https://testnet.dhscan.io' },
+    default: { name: 'Datahaven Explorer', url: 'https://explorer.datahaven.tech' },
   },
 });
 
-<<<<<<< HEAD
-=======
-// 2. AMBIL PROJECT ID DARI ENV (Dashboard Vercel)
-const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || '';
+// 2. AMBIL PROJECT ID DARI ENV
+const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || '93a6b83f06059d4359483c613098394e';
 
 const config = getDefaultConfig({
-  appName: 'HAVEN EXCHANGE',
-  projectId: projectId, 
-  chains: [datahaven],
-  ssr: true, 
+  appName: 'Haven App',
+  projectId: projectId,
+  chains: [datahaven, mainnet],
+  ssr: true,
 });
 
->>>>>>> d2b95ba (fix: use env variable for project id and fix typo)
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
-
-  const config = getDefaultConfig({
-    appName: 'HAVEN EXCHANGE',
-    projectId: '93a6b83f06059d4359483c613098394e', // Pakai ID ini biar build aman
-    chains: [datahaven],
-    ssr: true, 
-  });
-
-  if (!mounted) return null;
-
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={darkTheme()} modalSize="compact">
+        <RainbowKitProvider>
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>

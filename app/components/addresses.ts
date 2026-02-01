@@ -1,0 +1,7 @@
+export const CONTRACT_ADDRESSES = {
+  FACTORY: process.env.NEXT_PUBLIC_FACTORY,
+  ROUTER: process.env.NEXT_PUBLIC_ROUTER,
+  WETH: process.env.NEXT_PUBLIC_WETH,
+  USDC: process.env.NEXT_PUBLIC_USDC,
+  INIT_CODE_HASH: process.env.NEXT_PUBLIC_INIT_CODE_HASH,
+};

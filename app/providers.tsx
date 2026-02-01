@@ -6,6 +6,10 @@ import { RainbowKitProvider, getDefaultConfig, darkTheme } from '@rainbow-me/rai
 import { defineChain } from 'viem';
 import '@rainbow-me/rainbowkit/styles.css';
 
+<<<<<<< HEAD
+=======
+// 1. DEFINISIKAN CHAIN DATAHAVEN
+>>>>>>> d2b95ba (fix: use env variable for project id and fix typo)
 const datahaven = defineChain({
   id: 55931,
   name: 'Datahaven Testnet',
@@ -18,6 +22,19 @@ const datahaven = defineChain({
   },
 });
 
+<<<<<<< HEAD
+=======
+// 2. AMBIL PROJECT ID DARI ENV (Dashboard Vercel)
+const projectId = process.env.NEXT_PUBLIC_PROJECT_ID || '';
+
+const config = getDefaultConfig({
+  appName: 'HAVEN EXCHANGE',
+  projectId: projectId, 
+  chains: [datahaven],
+  ssr: true, 
+});
+
+>>>>>>> d2b95ba (fix: use env variable for project id and fix typo)
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {

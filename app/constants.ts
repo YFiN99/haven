@@ -6,3 +6,14 @@ export const DATAHAVEN_CONFIG = {
   INIT_CODE_HASH: "0x494fbc9e5b1973dd14b0dbd9996ce35a7005d39519137220de8dd017d4e5cbcd",
   FEE_SETTER: "0xE4CE700d2a32D635ba490384FA788554f8aCD81f"
 };
+
+// Tambahin ini biar SwapBox bisa import langsung jirr!
+export const ROUTER_ADDRESS = DATAHAVEN_CONFIG.ROUTER;
+export const WETH_ADDRESS = DATAHAVEN_CONFIG.WETH;
+export const TOKEN_ADDRESS = DATAHAVEN_CONFIG.USDC;
+
+// WAJIB: Tambahin ABI-nya di sini karena Vercel tadi komplain ROUTER_ABI missing!
+export const ROUTER_ABI = [
+  "function swapExactETHForTokens(uint amountOutMin, address[] calldata path, address to, uint deadline) external payable returns (uint[] memory amounts)",
+  "function getAmountsOut(uint amountIn, address[] calldata path) external view returns (uint[] memory amounts)"
+] as const;

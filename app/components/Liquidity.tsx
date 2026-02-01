@@ -85,18 +85,19 @@ export default function Liquidity() {
       return;
     }
 
-    // Add Liquidity ETH (HAV)
+    // Add Liquidity ETH (HAV) - FIX: BigInt(0)
     writeContract({
       address: ROUTER_ADDRESS, abi: ROUTER_ABI, functionName: 'addLiquidityETH',
-      args: [tokenOut.address as `0x${string}`, valToken, 0n, 0n, address!, BigInt(Math.floor(Date.now() / 1000) + 1200)],
+      args: [tokenOut.address as `0x${string}`, valToken, BigInt(0), BigInt(0), address!, BigInt(Math.floor(Date.now() / 1000) + 1200)],
       value: valHAV,
     });
   };
 
   // HANDLE REMOVE LIQUIDITY
   const handleRemove = () => {
-    if (!lpBalance || lpBalance === 0n || !pairAddress) return;
-    const amountToRemove = (lpBalance * BigInt(removePercent)) / 100n;
+    // FIX: BigInt(0)
+    if (!lpBalance || lpBalance === BigInt(0) || !pairAddress) return;
+    const amountToRemove = (lpBalance * BigInt(removePercent)) / BigInt(100);
 
     // Approve LP Token dulu
     writeContract({
@@ -104,10 +105,10 @@ export default function Liquidity() {
       args: [ROUTER_ADDRESS, amountToRemove],
     }, {
       onSuccess: () => {
-        // Remove Liquidity
+        // Remove Liquidity - FIX: BigInt(0)
         writeContract({
           address: ROUTER_ADDRESS, abi: ROUTER_ABI, functionName: 'removeLiquidityETH',
-          args: [tokenOut.address as `0x${string}`, amountToRemove, 0n, 0n, address!, BigInt(Math.floor(Date.now() / 1000) + 1200)],
+          args: [tokenOut.address as `0x${string}`, amountToRemove, BigInt(0), BigInt(0), address!, BigInt(Math.floor(Date.now() / 1000) + 1200)],
         });
       }
     });
@@ -160,11 +161,13 @@ export default function Liquidity() {
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xs font-black uppercase italic text-gray-500">Your Position ({tokenOut.symbol})</h3>
             <span className="text-pink-500 text-[10px] font-black italic">
-              {lpBalance && lpBalance > 0n ? formatCompact(formatUnits(lpBalance, 18), 6) : '0.00'} LP
+              {/* FIX: BigInt(0) */}
+              {lpBalance && lpBalance > BigInt(0) ? formatCompact(formatUnits(lpBalance, 18), 6) : '0.00'} LP
             </span>
           </div>
 
-          {pairAddress && lpBalance && lpBalance > 0n ? (
+          {/* FIX: BigInt(0) */}
+          {pairAddress && lpBalance && lpBalance > BigInt(0) ? (
             <div className="space-y-3">
               <div className="grid grid-cols-4 gap-2">
                 {[25, 50, 75, 100].map((p) => (

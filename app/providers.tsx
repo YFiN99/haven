@@ -2,37 +2,49 @@
 import React, { useState, useEffect } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { WagmiProvider } from 'wagmi';
-import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { RainbowKitProvider, getDefaultConfig, darkTheme } from '@rainbow-me/rainbowkit';
 import { defineChain } from 'viem';
-import '@rainbow-me/rainbowkit/styles.css'; // WAJIB ADA JIRR
+
+// CSS INI HARUS ADA, KALAU GAK MODALNYA GAK KELIHATAN (TRANSPARAN)
+import '@rainbow-me/rainbowkit/styles.css';
 
 const datahaven = defineChain({
   id: 55931,
   name: 'Datahaven Testnet',
   nativeCurrency: { name: 'HAV', symbol: 'HAV', decimals: 18 },
-  rpcUrls: { default: { http: ['https://services.datahaven-testnet.network/testnet'] } },
-  blockExplorers: { default: { name: 'Blockscout', url: 'https://testnet.dhscan.io' } },
+  rpcUrls: {
+    default: { http: ['https://services.datahaven-testnet.network/testnet'] }, 
+  },
+  blockExplorers: {
+    default: { name: 'Blockscout', url: 'https://testnet.dhscan.io' },
+  },
+});
+
+const config = getDefaultConfig({
+  appName: 'HAVEN EXCHANGE',
+  projectId: '93a6b83f06059d4359483c613098394e', // GUE HARDCODE ID LO BIAR PASTI JALAN
+  chains: [datahaven],
+  ssr: true, 
 });
 
 const queryClient = new QueryClient();
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
 
-  const config = getDefaultConfig({
-    appName: 'HAVEN EXCHANGE',
-    projectId: process.env.NEXT_PUBLIC_PROJECT_ID || '93a6b83f06059d4359483c613098394e', // Ganti ID ini pake yang asli dari WalletConnect Cloud kalau ENV vercel lo gagal
-    chains: [datahaven],
-    ssr: true,
-  });
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
-  if (!mounted) return null;
+  // JANGAN RENDER APAPUN SAMPAI MOUNTED (BIAR GAK BENTROK SAMA SERVER)
+  if (!mounted) return <div style={{ visibility: 'hidden' }}>{children}</div>;
 
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider>{children}</RainbowKitProvider>
+        <RainbowKitProvider theme={darkTheme()} modalSize="compact">
+          {children}
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
   );

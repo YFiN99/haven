@@ -1,10 +1,10 @@
 'use client';
 import React, { useState } from 'react';
 import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { parseUnits, formatUnits } from 'viem';
+import { parseUnits } from 'viem';
 import { TOKEN_LIST, ROUTER_ADDRESS, WHT_ADDRESS } from '../constant/tokenlist';
 
-// --- HARDCORE ABI (ROUTER & ERC20) ---
+// --- HARDCORE ABI ---
 const INTERNAL_ABI = [
   {
     "name": "addLiquidityETH",
@@ -19,20 +19,6 @@ const INTERNAL_ABI = [
       { "name": "deadline", "type": "uint256" }
     ],
     "outputs": [{ "name": "amountToken", "type": "uint256" }, { "name": "amountETH", "type": "uint256" }, { "name": "liquidity", "type": "uint256" }]
-  },
-  {
-    "name": "removeLiquidityETH",
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "inputs": [
-      { "name": "token", "type": "address" },
-      { "name": "liquidity", "type": "uint256" },
-      { "name": "amountTokenMin", "type": "uint256" },
-      { "name": "amountETHMin", "type": "uint256" },
-      { "name": "to", "type": "address" },
-      { "name": "deadline", "type": "uint256" }
-    ],
-    "outputs": [{ "name": "amountToken", "type": "uint256" }, { "name": "amountETH", "type": "uint256" }]
   },
   {
     "constant": false,
@@ -61,12 +47,11 @@ export default function Liquidity() {
   const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Saldo Token & Native
   const { data: balA } = useBalance({ address, token: (tokenA?.address as `0x${string}`) || undefined });
-  const { data: balB } = useBalance({ address }); // Native HAV
+  const { data: balB } = useBalance({ address });
 
-  // Logic Allowance
   const isNativeA = tokenA?.address?.toLowerCase() === WHT_ADDRESS?.toLowerCase();
+  
   const { data: allowance } = useReadContract({
     address: tokenA?.address as `0x${string}`,
     abi: INTERNAL_ABI,
@@ -85,7 +70,7 @@ export default function Liquidity() {
 
       if (!isNativeA && (!allowance || (allowance as bigint) < pA)) {
         return writeContract({
-          address: tokenA.address as `0x${string}`,
+          address: tokenA?.address as `0x${string}`,
           abi: INTERNAL_ABI,
           functionName: 'approve',
           args: [ROUTER_ADDRESS as `0x${string}`, parseUnits("1000000000", 18)],
@@ -96,12 +81,9 @@ export default function Liquidity() {
         address: ROUTER_ADDRESS as `0x${string}`,
         abi: INTERNAL_ABI,
         functionName: 'addLiquidityETH',
-        args: [tokenA.address as `0x${string}`, pA, BigInt(0), BigInt(0), address, deadline],
+        args: [tokenA?.address as `0x${string}`, pA, BigInt(0), BigInt(0), address, deadline],
         value: pB,
       });
-    } else {
-      // Logic Remove - Dummy placeholder karena butuh Pair Address
-      alert("Fitur Remove butuh Pair Address jirr. Add dulu aja!");
     }
   };
 
@@ -126,7 +108,9 @@ export default function Liquidity() {
             <div className="flex items-center gap-4">
               <input type="number" placeholder="0.0" value={amountA} onChange={(e) => setAmountA(e.target.value)} className="bg-transparent text-3xl font-black outline-none w-full text-white" />
               <select value={tokenA?.symbol} onChange={(e) => setTokenA(TOKEN_LIST.find(t => t.symbol === e.target.value)!)} className="bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800 text-xs font-black">
-                {TOKEN_LIST.filter(t => t.address.toLowerCase() !== WHT_ADDRESS.toLowerCase()).map(t => <option key={t.symbol} value={t.symbol}>{t.symbol}</option>)}
+                {TOKEN_LIST.filter(t => t?.address && t.address.toLowerCase() !== WHT_ADDRESS?.toLowerCase()).map(t => (
+                  <option key={t.symbol} value={t.symbol}>{t.symbol}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -150,17 +134,8 @@ export default function Liquidity() {
           </button>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="bg-[#141414] p-8 rounded-[24px] border border-zinc-800 text-center">
-             <h3 className="text-6xl font-black italic mb-8 text-white">{removePercent}%</h3>
-             <input type="range" min="0" max="100" value={removePercent} onChange={(e) => setRemovePercent(parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-haven-pink mb-8" />
-             <div className="grid grid-cols-4 gap-2">
-               {[25, 50, 75, 100].map((p) => (
-                 <button key={p} onClick={() => setRemovePercent(p)} className={`py-2 rounded-xl text-[10px] font-black border transition-all ${removePercent === p ? 'bg-haven-pink border-haven-pink text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>{p}%</button>
-               ))}
-             </div>
-          </div>
-          <button onClick={() => alert("Cek Pair Address di Explorer jirr!")} className="w-full bg-zinc-900 text-zinc-500 py-6 rounded-2xl font-black uppercase text-xs border border-zinc-800">Confirm Remove</button>
+        <div className="space-y-6 py-10 text-center">
+          <p className="text-[10px] text-zinc-600 font-black uppercase">Coming Soon Jirr!</p>
         </div>
       )}
       

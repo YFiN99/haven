@@ -1,64 +1,43 @@
 // app/constant/abi.ts
-
 export const ROUTER_ABI = [
-  // 1. Swap Token A ke Token B (INI YANG TADI ILANG JIRR!)
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "amountIn", "type": "uint256" },
-      { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" },
-      { "internalType": "address[]", "name": "path", "type": "address[]" },
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "deadline", "type": "uint256" }
-    ],
-    "name": "swapExactTokensForTokens",
-    "outputs": [
-      { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  // 2. Read: Get Price (Dah bener)
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "amountIn", "type": "uint256" },
-      { "internalType": "address[]", "name": "path", "type": "address[]" }
-    ],
-    "name": "getAmountsOut",
-    "outputs": [
-      { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  // 3. Swap Native (HAV) to Token
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" },
-      { "internalType": "address[]", "name": "path", "type": "address[]" },
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "deadline", "type": "uint256" }
-    ],
     "name": "swapExactETHForTokens",
-    "outputs": [
-      { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
-    ],
+    "type": "function",
     "stateMutability": "payable",
-    "type": "function"
-  },
-  // 4. Swap Token to Native (HAV)
-  {
     "inputs": [
-      { "internalType": "uint256", "name": "amountIn", "type": "uint256" },
-      { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" },
-      { "internalType": "address[]", "name": "path", "type": "address[]" },
-      { "internalType": "address", "name": "to", "type": "address" },
-      { "internalType": "uint256", "name": "deadline", "type": "uint256" }
+      { "name": "amountOutMin", "type": "uint256" },
+      { "name": "path", "type": "address[]" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
     ],
+    "outputs": [{ "name": "amounts", "type": "uint256[]" }]
+  },
+  {
     "name": "swapExactTokensForETH",
-    "outputs": [
-      { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
-    ],
+    "type": "function",
     "stateMutability": "nonpayable",
-    "type": "function"
+    "inputs": [
+      { "name": "amountIn", "type": "uint256" },
+      { "name": "amountOutMin", "type": "uint256" },
+      { "name": "path", "type": "address[]" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [{ "name": "amounts", "type": "uint256[]" }]
+  },
+  {
+    "name": "getAmountsOut",
+    "type": "function",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "amountIn", "type": "uint256" },
+      { "name": "path", "type": "address[]" }
+    ],
+    "outputs": [{ "name": "amounts", "type": "uint256[]" }]
   }
+] as const;
+
+export const ERC20_ABI = [
+  { "inputs": [{ "name": "owner", "type": "address" }, { "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+  { "inputs": [{ "name": "spender", "type": "address" }, { "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [{ "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }
 ] as const;

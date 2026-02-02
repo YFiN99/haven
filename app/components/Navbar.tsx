@@ -1,31 +1,50 @@
 'use client';
 import React from 'react';
-import { Shield } from 'lucide-react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 
-const Navbar = () => {
+export default function Navbar({ activeTab, setActiveTab }: any) {
   return (
-    <nav className="flex items-center justify-between px-6 py-4 bg-black/80 backdrop-blur-md border-b border-gray-800 fixed top-0 w-full z-50">
-      <div className="flex items-center gap-2">
-        <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-          <Shield className="text-black w-5 h-5" fill="black" />
+    <nav className="w-full border-b border-zinc-900 bg-black/80 backdrop-blur-xl sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+        
+        {/* LOGO AREA */}
+        <div className="flex items-center gap-10">
+          <div className="flex items-center gap-3 group cursor-pointer">
+            {/* Pakai div buat handle logo kalau file img lo masih pecah/hilang di w.PNG */}
+            <div className="w-9 h-9 bg-white rounded-xl flex items-center justify-center font-black text-black text-xl shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+              H
+            </div>
+            <span className="text-white font-black italic tracking-tighter text-2xl group-hover:text-haven-pink transition-colors">
+              HAVEN
+            </span>
+          </div>
+          
+          {/* NAVIGASI DATAR (Kunci biar gak scroll kayak di 77.PNG) */}
+          <div className="hidden md:flex bg-[#0f0f0f] p-1 rounded-2xl border border-zinc-800/50 shadow-inner">
+            {['swap', 'liquidity', 'pools', 'farm'].map((t) => (
+              <button 
+                key={t}
+                onClick={() => setActiveTab(t)}
+                className={`px-7 py-2 rounded-xl text-[10px] font-black uppercase transition-all duration-300 ${
+                  activeTab === t 
+                  ? 'bg-zinc-800 text-haven-pink shadow-lg border border-zinc-700' 
+                  : 'text-zinc-500 hover:text-zinc-200'
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
         </div>
-        <div className="hidden sm:block">
-          <span className="text-white font-black text-xl tracking-tighter uppercase italic">HAVEN </span>
-          <span className="text-pink-500 font-black text-xl tracking-tighter uppercase italic">EXCHANGE</span>
+
+        {/* WALLET BUTTON (Posisi Pojok Kanan Atas) */}
+        <div className="flex items-center gap-4">
+           <div className="bg-[#0f0f0f] px-5 py-2.5 rounded-2xl border border-zinc-800 text-[11px] font-black text-white hover:border-haven-pink transition-all cursor-pointer flex items-center gap-3">
+              <div className="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+              0xE4...D81f
+           </div>
         </div>
-      </div>
 
-      <div className="flex items-center bg-[#131313] border border-gray-800 rounded-full p-1">
-        {['Swap', 'Liquidity'].map((item) => (
-          <button key={item} className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white transition-all">
-            {item}
-          </button>
-        ))}
       </div>
-
-      <ConnectButton accountStatus="avatar" chainStatus="icon" showBalance={true} />
     </nav>
   );
-};
-export default Navbar;
+}

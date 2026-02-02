@@ -99,8 +99,8 @@ export default function Page() {
                     <span className="text-yellow-500 animate-pulse">Wait a sec... Blockchain is cooking...</span>
                   ) : (
                     <div className="flex flex-col gap-2">
-                      <span className="text-green-500">BERHASIL JIRR! 🔥</span>
-                      <a href={`https://explorer.datahaven.com/tx/${hash}`} target="_blank" className="text-zinc-500 underline">Lihat di Explorer</a>
+                      <span className="text-green-500">success! </span>
+                      <a href={`https://testnet.dhscan.io//tx/${hash}`} target="_blank" className="text-zinc-500 underline">Lihat di Explorer</a>
                     </div>
                   )}
                 </div>

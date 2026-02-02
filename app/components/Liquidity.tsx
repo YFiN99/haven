@@ -8,8 +8,8 @@ import { ROUTER_ABI, ERC20_ABI } from '../constant/abi';
 export default function Liquidity() {
   const { address, isConnected } = useAccount();
   const [activeSubTab, setActiveSubTab] = useState<'add' | 'remove'>('add');
-  const [tokenA, setTokenA] = useState(TOKEN_LIST[0]); // Biasanya Token (MOCK)
-  const [tokenB, setTokenB] = useState(TOKEN_LIST[1]); // Biasanya Native (HAV)
+  const [tokenA, setTokenA] = useState(TOKEN_LIST[0]); 
+  const [tokenB, setTokenB] = useState(TOKEN_LIST[1]); 
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [removePercent, setRemovePercent] = useState(0);
@@ -19,28 +19,32 @@ export default function Liquidity() {
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   // Hook Saldo
-  const { data: balA } = useBalance({ address, token: tokenA.address as `0x${string}` || undefined });
-  const { data: balB } = useBalance({ address, token: tokenB.address as `0x${string}` || undefined });
+  const { data: balA } = useBalance({ address, token: (tokenA?.address as `0x${string}`) || undefined });
+  const { data: balB } = useBalance({ address, token: (tokenB?.address as `0x${string}`) || undefined });
 
-  // Cek Allowance untuk Token A (Jika bukan Native)
+  // CEK ALLOWANCE (Fix Type Error jirr)
+  const isSellingNative = tokenA?.address?.toLowerCase() === WHT_ADDRESS?.toLowerCase();
+  
   const { data: allowance } = useReadContract({
-    address: tokenA.address as `0x${string}`,
+    address: tokenA?.address as `0x${string}`,
     abi: ERC20_ABI,
     functionName: 'allowance',
-    args: address ? [address, ROUTER_ADDRESS as `0x${string}`] : undefined,
-    query: { enabled: !!address && tokenA.address.toLowerCase() !== WHT_ADDRESS.toLowerCase() }
+    args: address && ROUTER_ADDRESS ? [address, ROUTER_ADDRESS as `0x${string}`] : undefined,
+    query: { 
+      enabled: !!address && !!tokenA?.address && !isSellingNative 
+    }
   });
 
   const handleSupply = async () => {
-    if (!isConnected) return alert("Konekin dompet jirr!");
+    if (!isConnected || !address) return alert("Konekin dompet jirr!");
     if (!amountA || !amountB) return alert("Isi jumlahnya dulu!");
 
     const pAmountA = parseUnits(amountA, 18);
     const pAmountB = parseUnits(amountB, 18);
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 20);
 
-    // LOGIC: Jika Token A adalah ERC20 dan belum di-approve
-    if (tokenA.address.toLowerCase() !== WHT_ADDRESS.toLowerCase()) {
+    // Logic Approve
+    if (!isSellingNative) {
       if (!allowance || (allowance as bigint) < pAmountA) {
         writeContract({
           address: tokenA.address as `0x${string}`,
@@ -52,7 +56,7 @@ export default function Liquidity() {
       }
     }
 
-    // Panggil addLiquidityETH (Asumsi tokenB adalah Native HAV)
+    // Add Liquidity
     writeContract({
       address: ROUTER_ADDRESS as `0x${string}`,
       abi: ROUTER_ABI,
@@ -60,12 +64,12 @@ export default function Liquidity() {
       args: [
         tokenA.address as `0x${string}`,
         pAmountA,
-        BigInt(0), // amountTokenMin
-        BigInt(0), // amountETHMin
+        BigInt(0),
+        BigInt(0),
         address as `0x${string}`,
         deadline
       ],
-      value: pAmountB, // Native HAV dikirim di sini
+      value: pAmountB,
     });
   };
 
@@ -90,7 +94,6 @@ export default function Liquidity() {
 
       {activeSubTab === 'add' ? (
         <div className="space-y-2">
-          {/* Box Token A (ERC20) */}
           <div className="bg-[#141414] p-6 rounded-[24px] border border-zinc-800">
             <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase mb-3">
               <span>Input Token</span>
@@ -108,7 +111,6 @@ export default function Liquidity() {
 
           <div className="flex justify-center -my-3 relative z-10 text-haven-pink font-black text-xl">+</div>
 
-          {/* Box Token B (Native HAV) */}
           <div className="bg-[#141414] p-6 rounded-[24px] border border-zinc-800">
             <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase mb-3">
               <span>Input HAV (Native)</span>
@@ -126,13 +128,12 @@ export default function Liquidity() {
             disabled={isWalletPending || isConfirming}
             className="w-full bg-white text-black mt-8 py-6 rounded-2xl font-black uppercase text-xs tracking-[0.4em] hover:bg-haven-pink hover:text-white transition-all shadow-lg disabled:opacity-50"
           >
-            {isWalletPending || isConfirming ? 'PROCESSING...' : (allowance && (allowance as bigint) > 0 ? 'SUPPLY LIKUIDITAS' : 'APPROVE TOKEN')}
+            {isWalletPending || isConfirming ? 'PROCESSING...' : (allowance && (allowance as bigint) > 0 || isSellingNative ? 'SUPPLY LIKUIDITAS' : 'APPROVE TOKEN')}
           </button>
           
-          {hash && <p className="text-[9px] text-center mt-4 text-zinc-500 font-bold uppercase tracking-tighter">Tx: {hash.slice(0,20)}...</p>}
+          {hash && <p className="text-[9px] text-center mt-4 text-zinc-500 font-bold uppercase tracking-tighter">Tx: {hash.slice(0,12)}...{hash.slice(-8)}</p>}
         </div>
       ) : (
-        /* UI REMOVE (Logic ini butuh Pair Address, skip dulu biar lo bisa Add) */
         <div className="text-center py-20 text-zinc-700 font-black uppercase text-[10px]">Remove Liquidity Coming Soon</div>
       )}
     </div>

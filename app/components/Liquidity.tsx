@@ -52,7 +52,7 @@ export default function Liquidity() {
   const [amountB, setAmountB] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const { writeContract, data: hash, isPending } = useWriteContract();
+  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const isNativeA = tokenA?.address?.toLowerCase() === WHT_ADDRESS?.toLowerCase();
@@ -71,10 +71,11 @@ export default function Liquidity() {
     query: { enabled: !!address && !!tokenA?.address && !isNativeA }
   });
 
-  // Explicitly treat as bigint, default to 0 if undefined
   const allowance = (rawAllowance ?? BigInt(0)) as bigint;
 
-  const handleAddLiquidity = () => {
+  const handleAddLiquidity = async () => {
+    setErrorMsg(null);
+
     if (!isConnected || !address) {
       setErrorMsg("Konekin dompet dulu bro!");
       return;
@@ -85,50 +86,83 @@ export default function Liquidity() {
       return;
     }
 
-    const amountTokenDesired = parseUnits(amountA, 18);
-    const amountETHDesired   = parseUnits(amountB, 18);
+    try {
+      const amountTokenDesired = parseUnits(amountA, 18);
+      const amountETHDesired   = parseUnits(amountB, 18);
 
-    // Slippage 3%
-    const slippage = BigInt(97);
-    const hundred  = BigInt(100);
+      // Slippage 3%
+      const slippage = BigInt(97);
+      const hundred  = BigInt(100);
 
-    const amountTokenMin = (amountTokenDesired * slippage) / hundred;
-    const amountETHMin   = (amountETHDesired * slippage) / hundred;
+      const amountTokenMin = (amountTokenDesired * slippage) / hundred;
+      const amountETHMin   = (amountETHDesired * slippage) / hundred;
 
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 30);
+      const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 30);
 
-    // Approval check
-    if (!isNativeA) {
-      // TypeScript sekarang tahu allowance adalah bigint
-      if (allowance < amountTokenDesired) {
-        writeContract({
-          address: tokenA?.address as `0x${string}`,
-          abi: TOKEN_ABI,
-          functionName: 'approve',
-          args: [ROUTER_ADDRESS as `0x${string}`, amountTokenDesired * BigInt(2)],
-        });
-        setErrorMsg(null);
-        return;
+      // Log supaya tahu apa yang dikirim
+      console.log("Preparing addLiquidityETH:", {
+        token: tokenA?.address,
+        amountTokenDesired: amountTokenDesired.toString(),
+        amountTokenMin: amountTokenMin.toString(),
+        amountETHMin: amountETHMin.toString(),
+        to: address,
+        deadline: deadline.toString(),
+        value: amountETHDesired.toString(),
+      });
+
+      // Approval check
+      if (!isNativeA) {
+        if (allowance < amountTokenDesired) {
+          console.log("Approval needed. Current allowance:", allowance.toString());
+          writeContract({
+            address: tokenA?.address as `0x${string}`,
+            abi: TOKEN_ABI,
+            functionName: 'approve',
+            args: [ROUTER_ADDRESS as `0x${string}`, amountTokenDesired * BigInt(2)],
+            // Gas manual untuk approval (biasanya lebih kecil)
+            gas: BigInt(100000),
+            maxFeePerGas: BigInt(30000000000),      // 30 gwei
+            maxPriorityFeePerGas: BigInt(5000000000), // 5 gwei
+          });
+          return;
+        }
       }
+
+      // Add liquidity dengan gas manual yang lebih tinggi
+      writeContract({
+        address: ROUTER_ADDRESS as `0x${string}`,
+        abi: ROUTER_ABI,
+        functionName: 'addLiquidityETH',
+        args: [
+          tokenA?.address as `0x${string}`,
+          amountTokenDesired,
+          amountTokenMin,
+          amountETHMin,
+          address,
+          deadline
+        ],
+        value: amountETHDesired,
+
+        // Gas settings manual — ini kunci untuk testnet yang susah estimasi
+        gas: BigInt(6000000),                     // 6 juta — aman untuk add liquidity
+        maxFeePerGas: BigInt(30000000000),        // 30 gwei
+        maxPriorityFeePerGas: BigInt(5000000000), // 5 gwei priority
+      });
+
+    } catch (err: any) {
+      console.error("Error preparing tx:", err);
+      setErrorMsg(err?.shortMessage || err?.message || "Gagal mempersiapkan transaksi");
     }
-
-    setErrorMsg(null);
-
-    writeContract({
-      address: ROUTER_ADDRESS as `0x${string}`,
-      abi: ROUTER_ABI,
-      functionName: 'addLiquidityETH',
-      args: [
-        tokenA?.address as `0x${string}`,
-        amountTokenDesired,
-        amountTokenMin,
-        amountETHMin,
-        address,
-        deadline
-      ],
-      value: amountETHDesired,
-    });
   };
+
+  // Tampilkan error dari writeContract jika ada
+  React.useEffect(() => {
+    if (writeError) {
+      console.error("writeContract error:", writeError);
+      const msg = (writeError as any)?.shortMessage || writeError?.message || "Transaksi gagal";
+      setErrorMsg(msg);
+    }
+  }, [writeError]);
 
   const buttonText = (() => {
     if (isPending || isConfirming) return 'COOKING...';
@@ -211,7 +245,7 @@ export default function Liquidity() {
           </div>
 
           {errorMsg && (
-            <div className="text-red-500 text-sm text-center mt-2">
+            <div className="text-red-500 text-sm text-center mt-2 break-words">
               {errorMsg}
             </div>
           )}
@@ -225,8 +259,8 @@ export default function Liquidity() {
           </button>
 
           {hash && (
-            <div className="mt-4 p-3 bg-zinc-900 rounded-xl text-[8px] font-mono text-zinc-500 break-all text-center">
-              TX: {hash}
+            <div className="mt-4 p-3 bg-zinc-900 rounded-xl text-[8px] font-mono text-zinc-400 break-all text-center">
+              TX Hash: {hash}
             </div>
           )}
         </div>

@@ -70,8 +70,8 @@ export default function Liquidity() {
     query: { enabled: !!address && !!tokenA?.address && !isNativeA }
   });
 
-  // Pastikan allowance selalu bigint (default 0n jika undefined)
-  const allowance = allowanceData ?? 0n;
+  // Pastikan allowance selalu bigint (default 0 jika undefined)
+  const allowance = allowanceData ?? BigInt(0);
 
   const handleAddLiquidity = () => {
     if (!isConnected || !address) {
@@ -98,7 +98,6 @@ export default function Liquidity() {
 
     // Cek approval jika bukan native token
     if (!isNativeA) {
-      // allowance sudah dijamin bigint dari atas
       if (allowance < amountTokenDesired) {
         writeContract({
           address: tokenA?.address as `0x${string}`,
@@ -132,7 +131,7 @@ export default function Liquidity() {
 
   const buttonText = (() => {
     if (isPending || isConfirming) return 'COOKING...';
-    if (!isNativeA && allowance === 0n) return 'APPROVE TOKEN';
+    if (!isNativeA && allowance === BigInt(0)) return 'APPROVE TOKEN';
     return 'SUPPLY LIKUIDITAS';
   })();
 

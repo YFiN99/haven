@@ -1,110 +1,132 @@
 'use client';
 import React, { useState } from 'react';
 import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
-import { parseUnits } from 'viem';
+import { parseUnits, formatUnits } from 'viem';
 import { TOKEN_LIST, ROUTER_ADDRESS, WHT_ADDRESS } from '../constant/tokenlist';
-import { ROUTER_ABI, ERC20_ABI } from '../constant/abi';
+
+// --- HARDCORE ABI (ROUTER & ERC20) ---
+const INTERNAL_ABI = [
+  {
+    "name": "addLiquidityETH",
+    "type": "function",
+    "stateMutability": "payable",
+    "inputs": [
+      { "name": "token", "type": "address" },
+      { "name": "amountTokenDesired", "type": "uint256" },
+      { "name": "amountTokenMin", "type": "uint256" },
+      { "name": "amountETHMin", "type": "uint256" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [{ "name": "amountToken", "type": "uint256" }, { "name": "amountETH", "type": "uint256" }, { "name": "liquidity", "type": "uint256" }]
+  },
+  {
+    "name": "removeLiquidityETH",
+    "type": "function",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "token", "type": "address" },
+      { "name": "liquidity", "type": "uint256" },
+      { "name": "amountTokenMin", "type": "uint256" },
+      { "name": "amountETHMin", "type": "uint256" },
+      { "name": "to", "type": "address" },
+      { "name": "deadline", "type": "uint256" }
+    ],
+    "outputs": [{ "name": "amountToken", "type": "uint256" }, { "name": "amountETH", "type": "uint256" }]
+  },
+  {
+    "constant": false,
+    "inputs": [{ "name": "spender", "type": "address" }, { "name": "amount", "type": "uint256" }],
+    "name": "approve",
+    "outputs": [{ "name": "success", "type": "bool" }],
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [{ "name": "owner", "type": "address" }, { "name": "spender", "type": "address" }],
+    "name": "allowance",
+    "outputs": [{ "name": "", "type": "uint256" }],
+    "type": "function"
+  }
+] as const;
 
 export default function Liquidity() {
   const { address, isConnected } = useAccount();
   const [activeSubTab, setActiveSubTab] = useState<'add' | 'remove'>('add');
   const [tokenA, setTokenA] = useState(TOKEN_LIST[0]); 
-  const [tokenB, setTokenB] = useState(TOKEN_LIST[1]); 
   const [amountA, setAmountA] = useState('');
   const [amountB, setAmountB] = useState('');
   const [removePercent, setRemovePercent] = useState(0);
 
-  // Hook Transaksi
-  const { writeContract, data: hash, isPending: isWalletPending } = useWriteContract();
+  const { writeContract, data: hash, isPending } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
-  // Hook Saldo
+  // Saldo Token & Native
   const { data: balA } = useBalance({ address, token: (tokenA?.address as `0x${string}`) || undefined });
-  const { data: balB } = useBalance({ address, token: (tokenB?.address as `0x${string}`) || undefined });
+  const { data: balB } = useBalance({ address }); // Native HAV
 
-  // CEK ALLOWANCE (Fix Type Error jirr)
-  const isSellingNative = tokenA?.address?.toLowerCase() === WHT_ADDRESS?.toLowerCase();
-  
+  // Logic Allowance
+  const isNativeA = tokenA?.address?.toLowerCase() === WHT_ADDRESS?.toLowerCase();
   const { data: allowance } = useReadContract({
     address: tokenA?.address as `0x${string}`,
-    abi: ERC20_ABI,
+    abi: INTERNAL_ABI,
     functionName: 'allowance',
     args: address && ROUTER_ADDRESS ? [address, ROUTER_ADDRESS as `0x${string}`] : undefined,
-    query: { 
-      enabled: !!address && !!tokenA?.address && !isSellingNative 
-    }
+    query: { enabled: !!address && !!tokenA?.address && !isNativeA }
   });
 
-  const handleSupply = async () => {
+  const handleAction = async () => {
     if (!isConnected || !address) return alert("Konekin dompet jirr!");
-    if (!amountA || !amountB) return alert("Isi jumlahnya dulu!");
-
-    const pAmountA = parseUnits(amountA, 18);
-    const pAmountB = parseUnits(amountB, 18);
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 20);
 
-    // Logic Approve
-    if (!isSellingNative) {
-      if (!allowance || (allowance as bigint) < pAmountA) {
-        writeContract({
+    if (activeSubTab === 'add') {
+      const pA = parseUnits(amountA || "0", 18);
+      const pB = parseUnits(amountB || "0", 18);
+
+      if (!isNativeA && (!allowance || (allowance as bigint) < pA)) {
+        return writeContract({
           address: tokenA.address as `0x${string}`,
-          abi: ERC20_ABI,
+          abi: INTERNAL_ABI,
           functionName: 'approve',
           args: [ROUTER_ADDRESS as `0x${string}`, parseUnits("1000000000", 18)],
         });
-        return;
       }
-    }
 
-    // Add Liquidity
-    writeContract({
-      address: ROUTER_ADDRESS as `0x${string}`,
-      abi: ROUTER_ABI,
-      functionName: 'addLiquidityETH',
-      args: [
-        tokenA.address as `0x${string}`,
-        pAmountA,
-        BigInt(0),
-        BigInt(0),
-        address as `0x${string}`,
-        deadline
-      ],
-      value: pAmountB,
-    });
+      writeContract({
+        address: ROUTER_ADDRESS as `0x${string}`,
+        abi: INTERNAL_ABI,
+        functionName: 'addLiquidityETH',
+        args: [tokenA.address as `0x${string}`, pA, BigInt(0), BigInt(0), address, deadline],
+        value: pB,
+      });
+    } else {
+      // Logic Remove - Dummy placeholder karena butuh Pair Address
+      alert("Fitur Remove butuh Pair Address jirr. Add dulu aja!");
+    }
   };
 
   return (
     <div className="w-full max-w-[480px] bg-[#0c0c0c] border border-zinc-800 rounded-[32px] p-8 shadow-2xl animate-in fade-in zoom-in duration-300">
-      
-      {/* SUB-TAB NAVIGATION */}
       <div className="flex gap-6 mb-8 border-b border-zinc-900 pb-4">
-        <button 
-          onClick={() => setActiveSubTab('add')}
-          className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeSubTab === 'add' ? 'text-haven-pink border-b-2 border-haven-pink pb-4 -mb-[18px]' : 'text-zinc-600'}`}
-        >
-          Add Liquidity
-        </button>
-        <button 
-          onClick={() => setActiveSubTab('remove')}
-          className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeSubTab === 'remove' ? 'text-haven-pink border-b-2 border-haven-pink pb-4 -mb-[18px]' : 'text-zinc-600'}`}
-        >
-          Remove
-        </button>
+        {['add', 'remove'].map((tab) => (
+          <button key={tab} onClick={() => setActiveSubTab(tab as any)} 
+            className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all ${activeSubTab === tab ? 'text-haven-pink border-b-2 border-haven-pink pb-4 -mb-[18px]' : 'text-zinc-600'}`}>
+            {tab === 'add' ? 'Add Liquidity' : 'Remove'}
+          </button>
+        ))}
       </div>
 
       {activeSubTab === 'add' ? (
         <div className="space-y-2">
           <div className="bg-[#141414] p-6 rounded-[24px] border border-zinc-800">
             <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase mb-3">
-              <span>Input Token</span>
+              <span>Token</span>
               <span className="italic">Bal: {balA?.formatted.slice(0, 6) || '0.00'}</span>
             </div>
             <div className="flex items-center gap-4">
-              <input type="number" placeholder="0.0" value={amountA} onChange={(e) => setAmountA(e.target.value)}
-                className="bg-transparent text-3xl font-black outline-none w-full text-white" />
-              <select value={tokenA.symbol} onChange={(e) => setTokenA(TOKEN_LIST.find(t => t.symbol === e.target.value)!)}
-                className="bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800 text-xs font-black">
-                {TOKEN_LIST.map(t => <option key={t.symbol} value={t.symbol}>{t.symbol}</option>)}
+              <input type="number" placeholder="0.0" value={amountA} onChange={(e) => setAmountA(e.target.value)} className="bg-transparent text-3xl font-black outline-none w-full text-white" />
+              <select value={tokenA?.symbol} onChange={(e) => setTokenA(TOKEN_LIST.find(t => t.symbol === e.target.value)!)} className="bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800 text-xs font-black">
+                {TOKEN_LIST.filter(t => t.address.toLowerCase() !== WHT_ADDRESS.toLowerCase()).map(t => <option key={t.symbol} value={t.symbol}>{t.symbol}</option>)}
               </select>
             </div>
           </div>
@@ -113,29 +135,36 @@ export default function Liquidity() {
 
           <div className="bg-[#141414] p-6 rounded-[24px] border border-zinc-800">
             <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase mb-3">
-              <span>Input HAV (Native)</span>
+              <span>HAV (Native)</span>
               <span className="italic">Bal: {balB?.formatted.slice(0, 6) || '0.00'}</span>
             </div>
             <div className="flex items-center gap-4">
-              <input type="number" placeholder="0.0" value={amountB} onChange={(e) => setAmountB(e.target.value)}
-                className="bg-transparent text-3xl font-black outline-none w-full text-white" />
-              <div className="bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800 text-xs font-black text-haven-pink">HAV</div>
+              <input type="number" placeholder="0.0" value={amountB} onChange={(e) => setAmountB(e.target.value)} className="bg-transparent text-3xl font-black outline-none w-full text-white" />
+              <div className="bg-zinc-900 px-3 py-2 rounded-xl border border-zinc-800 text-xs font-black text-haven-pink italic">HAV</div>
             </div>
           </div>
 
-          <button 
-            onClick={handleSupply}
-            disabled={isWalletPending || isConfirming}
-            className="w-full bg-white text-black mt-8 py-6 rounded-2xl font-black uppercase text-xs tracking-[0.4em] hover:bg-haven-pink hover:text-white transition-all shadow-lg disabled:opacity-50"
-          >
-            {isWalletPending || isConfirming ? 'PROCESSING...' : (allowance && (allowance as bigint) > 0 || isSellingNative ? 'SUPPLY LIKUIDITAS' : 'APPROVE TOKEN')}
+          <button onClick={handleAction} disabled={isPending || isConfirming}
+            className="w-full bg-white text-black mt-8 py-6 rounded-2xl font-black uppercase text-xs tracking-[0.4em] hover:bg-haven-pink hover:text-white transition-all shadow-lg disabled:opacity-50">
+            {isPending || isConfirming ? 'COOKING...' : (allowance && (allowance as bigint) > 0 ? 'SUPPLY LIKUIDITAS' : 'APPROVE TOKEN')}
           </button>
-          
-          {hash && <p className="text-[9px] text-center mt-4 text-zinc-500 font-bold uppercase tracking-tighter">Tx: {hash.slice(0,12)}...{hash.slice(-8)}</p>}
         </div>
       ) : (
-        <div className="text-center py-20 text-zinc-700 font-black uppercase text-[10px]">Remove Liquidity Coming Soon</div>
+        <div className="space-y-6">
+          <div className="bg-[#141414] p-8 rounded-[24px] border border-zinc-800 text-center">
+             <h3 className="text-6xl font-black italic mb-8 text-white">{removePercent}%</h3>
+             <input type="range" min="0" max="100" value={removePercent} onChange={(e) => setRemovePercent(parseInt(e.target.value))} className="w-full h-1.5 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-haven-pink mb-8" />
+             <div className="grid grid-cols-4 gap-2">
+               {[25, 50, 75, 100].map((p) => (
+                 <button key={p} onClick={() => setRemovePercent(p)} className={`py-2 rounded-xl text-[10px] font-black border transition-all ${removePercent === p ? 'bg-haven-pink border-haven-pink text-white' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}>{p}%</button>
+               ))}
+             </div>
+          </div>
+          <button onClick={() => alert("Cek Pair Address di Explorer jirr!")} className="w-full bg-zinc-900 text-zinc-500 py-6 rounded-2xl font-black uppercase text-xs border border-zinc-800">Confirm Remove</button>
+        </div>
       )}
+      
+      {hash && <div className="mt-4 p-3 bg-zinc-900 rounded-xl text-[8px] font-mono text-zinc-500 break-all text-center">TX: {hash}</div>}
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt,
 import { parseUnits, formatUnits } from 'viem';
 import { TOKEN_LIST, ROUTER_ADDRESS, WHT_ADDRESS } from '../constant/tokenlist';
 
-// ABI minimal untuk token (approve, allowance) dan router (addLiquidityETH)
+// ABI token
 const TOKEN_ABI = [
   {
     constant: false,
@@ -22,6 +22,7 @@ const TOKEN_ABI = [
   }
 ] as const;
 
+// ABI router
 const ROUTER_ABI = [
   {
     inputs: [
@@ -62,7 +63,7 @@ export default function Liquidity() {
   });
   const { data: balB } = useBalance({ address });
 
-  const { data: allowanceData } = useReadContract({
+  const { data: rawAllowance } = useReadContract({
     address: tokenA?.address as `0x${string}`,
     abi: TOKEN_ABI,
     functionName: 'allowance',
@@ -70,8 +71,8 @@ export default function Liquidity() {
     query: { enabled: !!address && !!tokenA?.address && !isNativeA }
   });
 
-  // Pastikan allowance selalu bigint (default 0 jika undefined)
-  const allowance = allowanceData ?? BigInt(0);
+  // Explicitly treat as bigint, default to 0 if undefined
+  const allowance = (rawAllowance ?? BigInt(0)) as bigint;
 
   const handleAddLiquidity = () => {
     if (!isConnected || !address) {
@@ -87,17 +88,18 @@ export default function Liquidity() {
     const amountTokenDesired = parseUnits(amountA, 18);
     const amountETHDesired   = parseUnits(amountB, 18);
 
-    // Slippage tolerance 3%
+    // Slippage 3%
     const slippage = BigInt(97);
     const hundred  = BigInt(100);
 
     const amountTokenMin = (amountTokenDesired * slippage) / hundred;
-    const amountETHMin   = (amountETHDesired   * slippage) / hundred;
+    const amountETHMin   = (amountETHDesired * slippage) / hundred;
 
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 30); // 30 menit
+    const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 30);
 
-    // Cek approval jika bukan native token
+    // Approval check
     if (!isNativeA) {
+      // TypeScript sekarang tahu allowance adalah bigint
       if (allowance < amountTokenDesired) {
         writeContract({
           address: tokenA?.address as `0x${string}`,
@@ -110,7 +112,6 @@ export default function Liquidity() {
       }
     }
 
-    // Reset error sebelum kirim
     setErrorMsg(null);
 
     writeContract({
@@ -155,7 +156,6 @@ export default function Liquidity() {
 
       {activeSubTab === 'add' ? (
         <div className="space-y-2">
-          {/* Token Input */}
           <div className="bg-[#141414] p-6 rounded-[24px] border border-zinc-800">
             <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase mb-3">
               <span>Token</span>
@@ -189,7 +189,6 @@ export default function Liquidity() {
 
           <div className="flex justify-center -my-3 relative z-10 text-haven-pink font-black text-xl">+</div>
 
-          {/* HAV / Native Input */}
           <div className="bg-[#141414] p-6 rounded-[24px] border border-zinc-800">
             <div className="flex justify-between text-[10px] font-black text-zinc-600 uppercase mb-3">
               <span>HAV (Native)</span>
@@ -211,14 +210,12 @@ export default function Liquidity() {
             </div>
           </div>
 
-          {/* Error Message */}
           {errorMsg && (
             <div className="text-red-500 text-sm text-center mt-2">
               {errorMsg}
             </div>
           )}
 
-          {/* Button */}
           <button
             onClick={handleAddLiquidity}
             disabled={isPending || isConfirming}

@@ -11,6 +11,11 @@ import Pools from './components/Pools';
 export default function Page() {
   // State buat nentuin menu mana yang aktif (Default: Swap)
   const [activeTab, setActiveTab] = useState('swap');
+  
+  // Logic dummy biar SwapBox gak error TypeScript (WAJIB ADA JIRR)
+  const handleSwap = (amount: string, path: string[]) => {
+    console.log("Memulai swap:", amount, path);
+  };
 
   return (
     <main className="h-screen w-full bg-black text-white flex flex-col overflow-hidden">
@@ -20,10 +25,10 @@ export default function Page() {
       {/* 3. AREA KONTEN UTAMA: Cuma satu yang tampil di tengah */}
       <div className="flex-1 flex items-center justify-center p-4 relative">
         
-        {/* SWAP TAB */}
+        {/* SWAP TAB - Sekarang udah dikasih props biar gak error build */}
         {activeTab === 'swap' && (
           <div className="w-full max-w-[480px] animate-in fade-in zoom-in duration-300">
-            <SwapBox />
+            <SwapBox onSwap={handleSwap} isPending={false} />
           </div>
         )}
 

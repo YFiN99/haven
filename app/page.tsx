@@ -12,12 +12,37 @@ import Pools from './components/Pools';
 import { ROUTER_ADDRESS } from './constant/tokenlist';
 import { ROUTER_ABI } from './constant/abi';
 
+// ABI Minimal buat Approve Token
+const ERC20_ABI = [
+  {
+    "inputs": [
+      { "internalType": "address", "name": "spender", "type": "address" },
+      { "internalType": "uint256", "name": "amount", "type": "uint256" }
+    ],
+    "name": "approve",
+    "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+];
+
 export default function Page() {
   const [activeTab, setActiveTab] = useState('swap');
   const { address, isConnected } = useAccount();
 
-  const { writeContract, data: hash, isPending: isWalletPending } = useWriteContract();
+  const { writeContract, data: hash, isPending: isWalletPending, error: swapError } = useWriteContract();
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+
+  // Fungsi Approve (Panggil ini kalau swap gagal/insufficient allowance)
+  const handleApprove = async (tokenAddress: string, amount: string) => {
+    if (!tokenAddress) return;
+    writeContract({
+      address: tokenAddress as `0x${string}`,
+      abi: ERC20_ABI,
+      functionName: 'approve',
+      args: [ROUTER_ADDRESS as `0x${string}`, parseUnits(amount, 18)],
+    });
+  };
 
   const handleSwap = (amount: string, path: string[]) => {
     if (!isConnected || !address) {
@@ -34,8 +59,8 @@ export default function Page() {
       args: [
         parseUnits(amount, 18),         
         BigInt(0),                      
-        path as any,                    // <--- PAKSA 'as any' BIAR GAK ERROR 0x${string}
-        address as any,                 // <--- PAKSA 'as any' JUGA JIRR
+        path as any,                    
+        address as any,                 
         BigInt(Math.floor(Date.now() / 1000) + 60 * 20) 
       ],
     });
@@ -50,6 +75,13 @@ export default function Page() {
           <div className="w-full max-w-[480px] animate-in fade-in zoom-in duration-300">
             <SwapBox onSwap={handleSwap} isPending={isWalletPending || isConfirming} />
             
+            {/* ALERT ERROR BIAR GAK BINGUNG */}
+            {swapError && (
+              <div className="mt-4 p-3 bg-red-900/20 border border-red-500/50 rounded-xl text-[10px] text-red-500 font-black uppercase text-center">
+                {swapError.message.includes('allowance') ? 'NEED APPROVE FIRST JIRR!' : 'SWAP FAILED'}
+              </div>
+            )}
+
             {hash && (
               <div className="mt-4 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center">
                 {isConfirming ? (

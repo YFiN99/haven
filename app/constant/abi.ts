@@ -1,7 +1,23 @@
 // app/constant/abi.ts
 
 export const ROUTER_ABI = [
-  // Read: Get Price
+  // 1. Swap Token A ke Token B (INI YANG TADI ILANG JIRR!)
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "amountIn", "type": "uint256" },
+      { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" },
+      { "internalType": "address[]", "name": "path", "type": "address[]" },
+      { "internalType": "address", "name": "to", "type": "address" },
+      { "internalType": "uint256", "name": "deadline", "type": "uint256" }
+    ],
+    "name": "swapExactTokensForTokens",
+    "outputs": [
+      { "internalType": "uint256[]", "name": "amounts", "type": "uint256[]" }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  // 2. Read: Get Price (Dah bener)
   {
     "inputs": [
       { "internalType": "uint256", "name": "amountIn", "type": "uint256" },
@@ -14,7 +30,7 @@ export const ROUTER_ABI = [
     "stateMutability": "view",
     "type": "function"
   },
-  // Write: Swap Native to Token
+  // 3. Swap Native (HAV) to Token
   {
     "inputs": [
       { "internalType": "uint256", "name": "amountOutMin", "type": "uint256" },
@@ -29,7 +45,7 @@ export const ROUTER_ABI = [
     "stateMutability": "payable",
     "type": "function"
   },
-  // Write: Swap Token to Native
+  // 4. Swap Token to Native (HAV)
   {
     "inputs": [
       { "internalType": "uint256", "name": "amountIn", "type": "uint256" },

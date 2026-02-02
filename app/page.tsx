@@ -19,7 +19,7 @@ export default function Page() {
   // Hook buat eksekusi transaksi ke blockchain
   const { writeContract, data: hash, isPending: isWalletPending } = useWriteContract();
 
-  // Tunggu konfirmasi dari network setelah user klik "Confirm" di MetaMask
+  // Tunggu konfirmasi dari network
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
 
   const handleSwap = (amount: string, path: string[]) => {
@@ -30,17 +30,17 @@ export default function Page() {
 
     if (!amount || parseFloat(amount) <= 0) return;
 
-    // Eksekusi fungsi Swap (as any biar Vercel gak error pas build)
+    // Eksekusi fungsi Swap (Pakai BigInt biar Vercel GAK ERROR)
     writeContract({
       address: ROUTER_ADDRESS as `0x${string}`,
       abi: ROUTER_ABI,
       functionName: 'swapExactTokensForTokens' as any, 
       args: [
-        parseUnits(amount, 18), // Amount In
-        0,                      // Min Amount Out (Slippage 0)
-        path,                   // Path [TokenA, TokenB]
-        address,                // Penerima (User yang lagi konek)
-        Math.floor(Date.now() / 1000) + 60 * 20 // Deadline 20 menit
+        parseUnits(amount, 18),         // Amount In (Sudah BigInt dari parseUnits)
+        BigInt(0),                      // Min Amount Out (HARUS BigInt)
+        path,                           // Path [TokenA, TokenB]
+        address,                        // Penerima
+        BigInt(Math.floor(Date.now() / 1000) + 60 * 20) // Deadline (HARUS BigInt)
       ],
     });
   };
@@ -58,15 +58,18 @@ export default function Page() {
           <div className="w-full max-w-[480px] animate-in fade-in zoom-in duration-300">
             <SwapBox onSwap={handleSwap} isPending={isWalletPending || isConfirming} />
             
-            {/* Notifikasi Transaksi (Opsional) */}
+            {/* Notifikasi Transaksi */}
             {hash && (
               <div className="mt-4 p-4 bg-zinc-900 border border-zinc-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-center">
                 {isConfirming ? (
                   <span className="text-yellow-500 animate-pulse">Processing...</span>
                 ) : isSuccess ? (
-                  <a href={`https://explorer.datahaven.com/tx/${hash}`} target="_blank" className="text-green-500 hover:underline">
-                    Success! View Transaction
-                  </a>
+                  <div className="flex flex-col gap-2">
+                    <span className="text-green-500">Success!</span>
+                    <a href={`https://explorer.datahaven.com/tx/${hash}`} target="_blank" className="text-zinc-500 hover:text-white underline transition-all">
+                      View on Explorer
+                    </a>
+                  </div>
                 ) : null}
               </div>
             )}

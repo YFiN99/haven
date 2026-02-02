@@ -82,24 +82,26 @@ export default function Liquidity() {
     }
 
     const amountTokenDesired = parseUnits(amountA, 18);
-    const amountETHDesired = parseUnits(amountB, 18);
+    const amountETHDesired   = parseUnits(amountB, 18);
 
-    // Slippage tolerance 3% (bisa diubah jadi setting nanti)
-    const slippage = 97n; // 97% = maksimal rugi 3%
-    const amountTokenMin = (amountTokenDesired * slippage) / 100n;
-    const amountETHMin = (amountETHDesired * slippage) / 100n;
+    // Slippage tolerance 3% → pakai BigInt biasa (tanpa 'n')
+    const slippage = BigInt(97);
+    const hundred  = BigInt(100);
+
+    const amountTokenMin = (amountTokenDesired * slippage) / hundred;
+    const amountETHMin   = (amountETHDesired   * slippage) / hundred;
 
     const deadline = BigInt(Math.floor(Date.now() / 1000) + 60 * 30); // 30 menit
 
     // Cek approval jika bukan native token
     if (!isNativeA) {
-      const currentAllowance = allowance ?? 0n;
+      const currentAllowance = allowance ?? BigInt(0);
       if (currentAllowance < amountTokenDesired) {
         writeContract({
           address: tokenA?.address as `0x${string}`,
           abi: TOKEN_ABI,
           functionName: 'approve',
-          args: [ROUTER_ADDRESS as `0x${string}`, amountTokenDesired * 2n], // approve 2x supaya aman
+          args: [ROUTER_ADDRESS as `0x${string}`, amountTokenDesired * BigInt(2)],
         });
         setErrorMsg(null);
         return;
@@ -127,7 +129,7 @@ export default function Liquidity() {
 
   const buttonText = (() => {
     if (isPending || isConfirming) return 'COOKING...';
-    if (!isNativeA && (!allowance || (allowance as bigint) === 0n)) return 'APPROVE TOKEN';
+    if (!isNativeA && (!allowance || allowance === BigInt(0))) return 'APPROVE TOKEN';
     return 'SUPPLY LIKUIDITAS';
   })();
 

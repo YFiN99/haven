@@ -62,13 +62,16 @@ export default function Liquidity() {
   });
   const { data: balB } = useBalance({ address });
 
-  const { data: allowance } = useReadContract({
+  const { data: allowanceData } = useReadContract({
     address: tokenA?.address as `0x${string}`,
     abi: TOKEN_ABI,
     functionName: 'allowance',
     args: address && ROUTER_ADDRESS ? [address, ROUTER_ADDRESS as `0x${string}`] : undefined,
     query: { enabled: !!address && !!tokenA?.address && !isNativeA }
   });
+
+  // Pastikan allowance selalu bigint (default 0n jika undefined)
+  const allowance = allowanceData ?? 0n;
 
   const handleAddLiquidity = () => {
     if (!isConnected || !address) {
@@ -84,7 +87,7 @@ export default function Liquidity() {
     const amountTokenDesired = parseUnits(amountA, 18);
     const amountETHDesired   = parseUnits(amountB, 18);
 
-    // Slippage tolerance 3% → pakai BigInt biasa (tanpa 'n')
+    // Slippage tolerance 3%
     const slippage = BigInt(97);
     const hundred  = BigInt(100);
 
@@ -95,8 +98,8 @@ export default function Liquidity() {
 
     // Cek approval jika bukan native token
     if (!isNativeA) {
-      const currentAllowance = allowance ?? BigInt(0);
-      if (currentAllowance < amountTokenDesired) {
+      // allowance sudah dijamin bigint dari atas
+      if (allowance < amountTokenDesired) {
         writeContract({
           address: tokenA?.address as `0x${string}`,
           abi: TOKEN_ABI,
@@ -129,7 +132,7 @@ export default function Liquidity() {
 
   const buttonText = (() => {
     if (isPending || isConfirming) return 'COOKING...';
-    if (!isNativeA && (!allowance || allowance === BigInt(0))) return 'APPROVE TOKEN';
+    if (!isNativeA && allowance === 0n) return 'APPROVE TOKEN';
     return 'SUPPLY LIKUIDITAS';
   })();
 
